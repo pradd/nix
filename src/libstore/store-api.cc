@@ -836,8 +836,9 @@ namespace nix {
 
 RegisterStoreImplementation::Implementations * RegisterStoreImplementation::implementations = 0;
 
-
-ref<Store> openStore(const std::string & uri_,
+/* Split URI into protocol+hierarchy part and its parameter set. */
+std::pair<std::string, Store::Params> splitUriAndParams(
+    const std::string & uri_,
     const Store::Params & extraParams)
 {
     auto uri(uri_);
@@ -867,6 +868,15 @@ ref<Store> openStore(const std::string & uri_,
         }
         uri = uri_.substr(0, q);
     }
+    return {uri, params};
+}
+
+ref<Store> openStore(const std::string & uri_,
+    const Store::Params & extraParams)
+{
+    auto pair = splitUriAndParams(uri_, extraParams);
+    auto uri = pair.first;
+    Store::Params params = pair.second;
 
     for (auto fun : *RegisterStoreImplementation::implementations) {
         auto store = fun(uri, params);
